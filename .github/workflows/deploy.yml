@@ -1,0 +1,32 @@
+name: Build & Deploy API (Azure App Service)
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: . # root of api repo
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+      - run: npm run build --if-present
+
+      # zip the app (exclude node_modules to let Oryx restore at deploy time)
+      - run: zip -r api.zip . -x "node_modules/*" ".git/*" ".github/*" "*.log"
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: menn-api-aidarous
+          package: api.zip
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}

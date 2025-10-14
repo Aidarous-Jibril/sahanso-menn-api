@@ -27,6 +27,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const siteSettingRoutes = require("./routes/siteSettingRoutes");
 const contactRoutes = require('./routes/contactRoutes');
+const healthRouter = require('./routes/healthRoutes'); 
 
 // Initialize database connection
 connectDB();
@@ -85,6 +86,7 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use("/api/settings", siteSettingRoutes);
 app.use('/api/support', contactRoutes);
+app.use('/api/health', healthRouter);
 
 // Start the server
 const PORT = process.env.PORT || 8000;
