@@ -48,40 +48,44 @@ const server = http.createServer(app); // Create HTTP server
 //   process.env.ADMIN_URL,    // e.g. https://menn-multivendor-marketplace-admin.vercel.app (if you have one)
 // ];
 
-app.use(cors({
-  origin(origin, callback) {
-    // allow server-to-server / curl / SSR (no origin header)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    // allow Vercel preview branches (optional, safer if you want only your project)
-    if (/\.vercel\.app$/.test(origin)) return callback(null, true);
-    return callback(new Error('CORS not allowed for this origin'), false);
-  },
-  credentials: true,
-}));
-
-app.use(cookieParser());
-
+// app.use(cors({
+//   origin(origin, callback) {
+//     // allow server-to-server / curl / SSR (no origin header)
+//     if (!origin) return callback(null, true);
+//     if (allowedOrigins.includes(origin)) return callback(null, true);
+//     // allow Vercel preview branches (optional, safer if you want only your project)
+//     if (/\.vercel\.app$/.test(origin)) return callback(null, true);
+//     return callback(new Error('CORS not allowed for this origin'), false);
+//   },
+//   credentials: true,
+// }));
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
-  // add your Azure frontends:
   'https://menn-store-aidarous.azurewebsites.net',
   'https://menn-admin-aidarous.azurewebsites.net',
-  // still allow from env if you want to keep that path too
   process.env.FRONTEND_URL,
   process.env.ADMIN_URL,
 ];
 
-// app.use(
-//   cors({
-//     origin(origin, cb) {
-//       if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-//       return cb(new Error('Not allowed by CORS'));
-//     },
-//     credentials: true,
-//   })
-// );
+app.set('trust proxy', 1); // good when setting Secure cookies behind a proxy
+
+app.use(
+  cors({
+    origin(origin, cb) {
+      // allow SSR/cURL (no Origin) and allowed sites
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      // decline without throwing (avoids 500s)
+      return cb(null, false);
+    },
+    credentials: true,
+    optionsSuccessStatus: 204,
+  })
+);
+
+// respond to preflight
+app.options('*', cors());
+
 
 // app.use(cors({
 //     origin: ['http://localhost:3000', 'http://localhost:3001'], // Allow requests from this origin
