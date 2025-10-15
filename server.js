@@ -59,6 +59,7 @@ const server = http.createServer(app); // Create HTTP server
 //   },
 //   credentials: true,
 // }));
+app.use(cookieParser()); // Parse cookies
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
@@ -86,11 +87,6 @@ app.use(
 // respond to preflight
 app.options('*', cors());
 
-
-// app.use(cors({
-//     origin: ['http://localhost:3000', 'http://localhost:3001'], // Allow requests from this origin
-//   credentials: true, // Allow cookies and authorization headers to be sent
-// }));
 app.use(bodyParser.json({ limit: '10mb' })); // Parse JSON requests
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' })); // Parse URL-encoded requests
 app.use('/uploads', express.static(path.join(__dirname, '/uploads'))); // Serve uploaded files
