@@ -266,18 +266,42 @@ const getProductById = expressAsyncHandler(async (req, res) => {
   }
 });
 
-// Fetch products by subSubCategorySlug
+// // Fetch products by subSubCategorySlug
+// const getProductsBySubSubCategory = expressAsyncHandler(async (req, res) => {
+//   const { subSubCategory } = req.query;
+//   // Use a regex for case-insensitive match and ignore hyphens/spaces if needed
+//   const regex = new RegExp(subSubCategory.replace(/\s+/g, '[-\\s]?'), "i");
+//   const products = await Product.find({ subSubCategory: regex });
+  
+//   if (!products || products.length === 0) {
+//     return res.status(200).json({ success: true, products: [] });
+//   }
+  
+//   res.status(200).json({ success: true, products });
+// });
+
+// Fetch products by subSubCategorySlug WITH SORTING
 const getProductsBySubSubCategory = expressAsyncHandler(async (req, res) => {
-  const { subSubCategory } = req.query;
-  // Use a regex for case-insensitive match and ignore hyphens/spaces if needed
-  const regex = new RegExp(subSubCategory.replace(/\s+/g, '[-\\s]?'), "i");
-  const products = await Product.find({ subSubCategory: regex });
-  
-  if (!products || products.length === 0) {
-    return res.status(200).json({ success: true, products: [] });
-  }
-  
-  res.status(200).json({ success: true, products });
+  const { subSubCategory, sort = "newest" } = req.query;
+
+  // sort map (kept simple to match your schema)
+  const sortMap = {
+    "newest":     { createdAt: -1 },
+    "price-asc":  { discountPrice: 1 },   // discountPrice is required in your schema
+    "price-desc": { discountPrice: -1 },
+    "rating":     { rating: -1 },
+  };
+  const sortStage = sortMap[String(sort).toLowerCase()] || sortMap.newest;
+
+  // case-insensitive match; ignore spaces/hyphens
+  const regex = new RegExp(String(subSubCategory).replace(/\s+/g, '[-\\s]?'), "i");
+
+  const products = await Product.find({ subSubCategory: regex }).sort(sortStage);
+
+  return res.status(200).json({
+    success: true,
+    products: products || [],
+  });
 });
 
 // Get a single product for vendor dashboard
@@ -300,7 +324,6 @@ const getVendorSingleProduct = expressAsyncHandler(async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
-
 
 const createProductReview = expressAsyncHandler(async (req, res) => {
   const { user, rating, comment, productId } = req.body;
@@ -356,6 +379,7 @@ const createProductReview = expressAsyncHandler(async (req, res) => {
   }
 });
 
+
 module.exports = {
   createProduct,
   getVendorAllProducts,
@@ -365,7 +389,7 @@ module.exports = {
   getProductById,
   createProductReview,
   getProductsBySubSubCategory,
-  getVendorSingleProduct
+  getVendorSingleProduct,
 };
 
 

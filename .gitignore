@@ -1,8 +1,7 @@
-cat > backend/.gitignore <<'EOF'
-# OS
+# OS cruft
 .DS_Store
 
-# Envs
+# Env / secrets
 .env
 .env.*
 frontend/.env*
@@ -11,11 +10,17 @@ backend/.env*
 
 # Node / builds / caches
 node_modules/
-**/node_modules/
-**/dist/
-**/.turbo/
-**/coverage/
-**/.vercel/
-**/.next/
-**/uploads/
-EOF
+dist/
+.next/
+.vercel/
+coverage/
+.tmp/
+uploads/
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Misc you don't want in git
+cookies.txt

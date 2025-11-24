@@ -48,7 +48,6 @@ router.get('/', async (req, res, next) => {
   return getAllProducts(req, res, next);  
 });
 
-
 router.get('/:vendorId/products', getVendorAllProducts);
 router.get("/vendor/product/:id", isVendor, getVendorSingleProduct);
 router.post('/create-product',isVendor,  upload.array("images", 5), createProduct); 

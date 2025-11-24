@@ -7,7 +7,8 @@ const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv').config();
 const connectDB = require('./config/db');
 const http = require('http');
-// const socketIO = require('socket.io');
+const cron = require('node-cron');
+const { cleanupOldProducts } = require('./utils/cleanupOldProducts');
 
 // API Routes
 const userRoutes = require('./routes/userRoutes');
@@ -28,6 +29,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const siteSettingRoutes = require("./routes/siteSettingRoutes");
 const contactRoutes = require('./routes/contactRoutes');
 const healthRouter = require('./routes/healthRoutes'); 
+const { isAdmin } = require('./middleware/authMiddleware');
 
 // Initialize database connection
 connectDB();
@@ -36,29 +38,7 @@ connectDB();
 const app = express();
 const server = http.createServer(app); // Create HTTP server
 
-// Socket.io setup if needed
-// const io = socketIO(server);
-
 // Middleware setup
-// app.use(cookieParser()); // Parse cookies
-// const allowedOrigins = [
-//   'http://localhost:3000',
-//   'http://localhost:3001',
-//   process.env.FRONTEND_URL, // e.g. https://menn-multivendor-marketplace.vercel.app
-//   process.env.ADMIN_URL,    // e.g. https://menn-multivendor-marketplace-admin.vercel.app (if you have one)
-// ];
-
-// app.use(cors({
-//   origin(origin, callback) {
-//     // allow server-to-server / curl / SSR (no origin header)
-//     if (!origin) return callback(null, true);
-//     if (allowedOrigins.includes(origin)) return callback(null, true);
-//     // allow Vercel preview branches (optional, safer if you want only your project)
-//     if (/\.vercel\.app$/.test(origin)) return callback(null, true);
-//     return callback(new Error('CORS not allowed for this origin'), false);
-//   },
-//   credentials: true,
-// }));
 app.use(cookieParser()); // Parse cookies
 const allowedOrigins = [
   'http://localhost:3000',
@@ -110,6 +90,39 @@ app.use('/api/admin', adminRoutes);
 app.use("/api/settings", siteSettingRoutes);
 app.use('/api/support', contactRoutes);
 app.use('/api/health', healthRouter);
+// in server.js (after routes) — temporary, keep behind an admin check if you have one
+app.post('/api/admin/maintenance/cleanup', isAdmin, async (req, res) => {
+  try {
+    const days   = Number(req.body?.days) || 90;
+    const dryRun = Boolean(req.body?.dryRun);
+    const out = await cleanupOldProducts({ days, dryRun });
+    return res.json(out);
+  } catch (e) {
+    console.error('[cleanup endpoint] error:', e);
+    return res.status(500).json({ ok:false, error: e.message });
+  }
+});
+
+
+// (optional) verify at startup
+(async () => {
+  try {
+    const res = await cleanupOldProducts({ dryRun: true });
+    console.log('[startup] cleanupOldProducts dry-run ->', res);
+  } catch (e) {
+    console.error('[startup] cleanupOldProducts dry-run error:', e);
+  }
+})();
+
+// run every day at 02:15 server time
+cron.schedule('15 2 * * *', async () => {
+  try {
+    const res = await cleanupOldProducts();
+    console.log('[cron] cleanupOldProducts ->', res);
+  } catch (e) {
+    console.error('[cron] cleanupOldProducts error:', e);
+  }
+});
 
 // Start the server
 const PORT = process.env.PORT || 8000;

@@ -8,6 +8,11 @@ const reviewSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+const imageSchema = new mongoose.Schema({
+  public_id: { type: String },         // <— add this
+  url:       { type: String, required: true },
+}, { _id: false });
+
 const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -21,7 +26,7 @@ const productSchema = new mongoose.Schema(
     stock: { type: Number, required: true },
     vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor", required: true },
     isFeatured: { type: Boolean, default: false },
-    images: [{ url: { type: String, required: true } }],
+    images: [imageSchema],
     attributes: { type: Map, of: String },
     reviews: [reviewSchema],
     numReviews: { type: Number, default: 0 },
@@ -29,5 +34,7 @@ const productSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+// optional: help queries & TTL fallback
+productSchema.index({ createdAt: 1 });
 
 module.exports = mongoose.model("Product", productSchema);

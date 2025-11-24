@@ -8,7 +8,6 @@ const getPublicSiteSettings = expressAsyncHandler(async (req, res) => {
   if (!settings) {
     settings = await SiteSettings.create({});
   }
-console.log("settings", settings)
   // Only expose what the storefront needs
   const payload = {
     siteName: settings.siteName || "ShopO",
@@ -30,7 +29,6 @@ console.log("settings", settings)
 // Get Site Settings
 const getSiteSettings = expressAsyncHandler(async (req, res) => {
   let settings = await SiteSettings.findOne();
-  console.log('settings', settings)
   if (!settings) {
     settings = await SiteSettings.create({});
   }
